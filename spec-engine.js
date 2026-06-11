@@ -644,6 +644,7 @@
 
   // ===== 状態管理 =====
   const state = { type:null, D:null, L:null, M:null, N:null, lastConfirmedPartNo:null };
+  let specNameToDim = {}; // specName → dim symbol (D/L/M/N/type…) — buildSpecNameToDim() で生成
   const wysRowByD = {}; // D値 → { lRange:{min,max,text}, mVals:[] } のWYS制約マップ
 
   // ===== WYSスキャン（汎用化: パターンA/B-1/B-2/C全対応） =====
@@ -1419,6 +1420,22 @@
     }
     try { return JSON.parse(localStorage.getItem(`spec-mapping-admin-${srCode}`) || '{}'); } catch(e) {}
     return {};
+  }
+
+  // マッピングデータから { specName → dim記号 } マップを生成
+  // スペック名の [M]/[N] 等の角括弧記号を優先し、なければ WYS ヘッダー先頭アルファベットを使用
+  function buildSpecNameToDim(mappingData) {
+    const skip = new Set(['drawingLabels', 'imgPattern', 'drawings']);
+    const map = {};
+    Object.entries(mappingData).forEach(([specName, m]) => {
+      if (!m || typeof m !== 'object' || skip.has(specName)) return;
+      if (/^(タイプ|Type)$/i.test(specName.trim())) { map[specName] = 'type'; return; }
+      const hdr = (m.wysHeaders && m.wysHeaders[0]) || m.wysHeader || '';
+      const sym = (specName.match(/[\[（]\s*([A-Z])\s*[\]）]/) || [])[1]
+               || (hdr.match(/^([A-Za-z]+)/) || [])[1] || '';
+      if (sym) map[specName] = sym;
+    });
+    return map;
   }
 
   // マッピングデータから dim 記号に対応するスペック名を取得（シリーズ依存）
@@ -2199,14 +2216,11 @@
     const specs = rebuildPartNumberDisplay();
     if (!specs) return;
 
-    // state（旧FA固定スロット）も同期維持（SVGオーバーレイや規格表連動のため）
+    // state（SVGオーバーレイや規格表連動のため）をマッピングベースで同期
     specs.forEach(sp => {
       if (!sp.hasValue) return;
-      if (/軸径.*D|D.*φ/.test(sp.name) && /^\d+$/.test(sp.value)) state.D = sp.value;
-      else if (/長さ.*L/.test(sp.name)) state.L = sp.value;
-      else if (/めねじ.*\[M\]|めねじ.*M\(/.test(sp.name)) state.M = sp.value;
-      else if (/めねじ.*\[N\]|めねじ.*N\(/.test(sp.name)) state.N = sp.value;
-      else if (/^(タイプ|Type)$/i.test(sp.name.trim())) state.type = sp.value;
+      const dim = specNameToDim[sp.name];
+      if (dim) state[dim] = sp.value;
     });
 
     // ステータス更新
@@ -2367,6 +2381,10 @@
 
   // ===== スペックパネルのチェック変更を監視 =====
   function watchSpecChanges() {
+    // マッピングから specName→dim マップを構築（汎用化の核心）
+    const srCodeW = (location.pathname.match(/detail\/(\d+)/) || [])[1];
+    if (srCodeW) specNameToDim = buildSpecNameToDim(getMappingData(srCodeW));
+
     // MutationObserverでスペック選択の変化を監視
     const specPanel = document.querySelector('[class*="SpecPanel_panel"]');
     if (!specPanel) return;
@@ -2405,16 +2423,10 @@
           }
         }
 
-        if (/軸径.*D|D.*φ/.test(name) && val !== state.D) {
-          state.D = val; if (val) showDimBadgesGlobal('D', val);
-        } else if (/長さ.*L|L.*mm/.test(name) && val !== state.L) {
-          state.L = val; if (val) showDimBadgesGlobal('L', val);
-        } else if (/めねじ.*\[M\]|めねじ.*M\(/.test(name) && !/MD|MSC/.test(name) && val !== state.M) {
-          state.M = val; if (val) showDimBadgesGlobal('M', val);
-        } else if (/めねじ.*\[N\]|めねじ.*N\(/.test(name) && !/ND|NSC/.test(name) && val !== state.N) {
-          state.N = val; if (val) showDimBadgesGlobal('N', val);
-        } else if (/^(タイプ|Type)$/i.test(name.trim()) && val !== state.type) {
-          state.type = val;
+        const dim = specNameToDim[name];
+        if (dim && val !== state[dim]) {
+          state[dim] = val;
+          if (dim !== 'type' && val) showDimBadgesGlobal(dim, val);
         }
       });
       updatePartNumber();
@@ -2445,10 +2457,10 @@
             lastValues[key] = val;
             // nullセンチネル解除
             if (window.__specValueOverrides[name] === null) delete window.__specValueOverrides[name];
-            // L寸の場合はstate/badge更新（スペック名は「長さ」「長さ（L）」「L(mm)」等）
-            if (/長さ|^L$/.test(name) && state.L !== val) {
-              state.L = val;
-              showDimBadgesGlobal('L', val);
+            const dimN = specNameToDim[name];
+            if (dimN && state[dimN] !== val) {
+              state[dimN] = val;
+              if (dimN !== 'type') showDimBadgesGlobal(dimN, val);
             }
             // スペック名によらずパネルを即時更新
             updatePartNumber();
@@ -2505,14 +2517,14 @@
           if (val && val !== lastValues[key]) {
             lastValues[key] = val;
 
-            if (/長さ.*L|L.*mm/.test(name)) {
-              // null センチネルがある場合は解除してから反映
+            const dimP = specNameToDim[name];
+            if (dimP) {
               if (window.__specValueOverrides[name] === null) delete window.__specValueOverrides[name];
-              state.L = val;
-              showDimBadgesGlobal('L', val);
+              state[dimP] = val;
+              if (dimP !== 'type') showDimBadgesGlobal(dimP, val);
               updatePartNumber();
               highlightConfirmed();
-              console.log('[SpecHL] L value detected: ' + val);
+              console.log('[SpecHL] dim value detected: ' + dimP + '=' + val);
             }
           }
         });
@@ -2537,17 +2549,10 @@
           }
         }
 
-        if (/軸径.*D|D.*φ/.test(name) && val !== state.D) {
-          state.D = val; if (val) showDimBadgesGlobal('D', val);
-          updatePartNumber(); highlightConfirmed();
-        } else if (/めねじ.*\[M\]|めねじ.*M\(/.test(name) && !/MD|MSC/.test(name) && val !== state.M) {
-          state.M = val; if (val) showDimBadgesGlobal('M', val);
-          updatePartNumber(); highlightConfirmed();
-        } else if (/めねじ.*\[N\]|めねじ.*N\(/.test(name) && !/ND|NSC/.test(name) && val !== state.N) {
-          state.N = val; if (val) showDimBadgesGlobal('N', val);
-          updatePartNumber(); highlightConfirmed();
-        } else if (/^(タイプ|Type)$/i.test(name.trim()) && val !== state.type) {
-          state.type = val;
+        const dimC = specNameToDim[name];
+        if (dimC && val !== state[dimC]) {
+          state[dimC] = val;
+          if (dimC !== 'type' && val) showDimBadgesGlobal(dimC, val);
           updatePartNumber(); highlightConfirmed();
         }
       });
@@ -2601,7 +2606,7 @@
       if (misumiClearBtn) misumiClearBtn.click();
       clearAll._running = false;
     }
-    state.type = state.D = state.L = state.M = state.N = null;
+    Object.keys(state).forEach(k => { if (k !== 'lastConfirmedPartNo') state[k] = null; });
     window.__specValueOverridesConfirmed = {};
 
     // 現在のDOM選択値に null オーバーライド（クリア済みセンチネル）をセット。
