@@ -1,0 +1,128 @@
+{
+  "version": "0.1.0",
+  "seriesCode": "110300000820",
+  "generatedAt": "2026-06-12T06:54:20.043Z",
+  "totalSpecs": 14,
+  "mappedSpecs": 14,
+  "mappings": {
+    "軸端形状（右）": {
+      "wysHeader": "片端めねじ",
+      "wysHeaders": [
+        "片端めねじ",
+        "両端めねじ"
+      ],
+      "confidence": 100,
+      "source": "manual"
+    },
+    "材質": {
+      "wysHeader": "[M]材質",
+      "wysHeaders": [
+        "[M]材質"
+      ],
+      "confidence": 100,
+      "source": "manual"
+    },
+    "詳細材質": {
+      "wysHeader": "[M]材質",
+      "wysHeaders": [
+        "[M]材質"
+      ],
+      "confidence": 100,
+      "source": "manual"
+    },
+    "表面処理": {
+      "wysHeader": "[S]表面処理",
+      "wysHeaders": [
+        "[S]表面処理"
+      ],
+      "confidence": 100,
+      "source": "manual"
+    },
+    "軸径 D(φ)": {
+      "wysHeader": "D",
+      "wysHeaders": [
+        "D"
+      ],
+      "confidence": 100,
+      "source": "manual",
+      "partNoPosition": 2
+    },
+    "硬度": {
+      "wysHeader": "[H]硬度",
+      "wysHeaders": [
+        "[H]硬度"
+      ],
+      "confidence": 100,
+      "source": "manual"
+    },
+    "タイプ": {
+      "wysHeader": "型式",
+      "wysHeaders": [
+        "型式"
+      ],
+      "confidence": 100,
+      "source": "manual",
+      "partNoPosition": 1
+    },
+    "長さ L(mm)": {
+      "wysHeader": "L指定1mm単位",
+      "wysHeaders": [
+        "L指定1mm単位"
+      ],
+      "confidence": 100,
+      "source": "manual",
+      "partNoPosition": 3
+    },
+    "めねじ(並目・有効長：呼び径×2) [M](mm)": {
+      "wysHeader": "M(並目)・N(並目)選択",
+      "wysHeaders": [
+        "M(並目)・N(並目)選択"
+      ],
+      "confidence": 100,
+      "source": "manual",
+      "partNoPosition": 4
+    },
+    "めねじ(並目・有効長：呼び径×3) [MD](mm)": {
+      "wysHeader": "追加工コード",
+      "wysHeaders": [
+        "追加工コード"
+      ],
+      "confidence": 100,
+      "source": "manual"
+    },
+    "めねじ(並目・有効長：呼び径×3) [ND](mm)": {
+      "wysHeader": "追加工コード",
+      "wysHeaders": [
+        "追加工コード"
+      ],
+      "confidence": 100,
+      "source": "manual"
+    },
+    "めねじMを細目ねじ変更 [MSC](mm)": {
+      "wysHeader": "追加工コード",
+      "wysHeaders": [
+        "追加工コード"
+      ],
+      "confidence": 100,
+      "source": "manual"
+    },
+    "めねじNを細目ねじ変更 [NSC](mm)": {
+      "wysHeader": "追加工コード",
+      "wysHeaders": [
+        "追加工コード"
+      ],
+      "confidence": 100,
+      "source": "manual"
+    },
+    "めねじ(並目・有効長：呼び径×2) [N](mm)": {
+      "wysHeader": "M(並目)・N(並目)選択",
+      "wysHeaders": [
+        "M(並目)・N(並目)選択"
+      ],
+      "confidence": 100,
+      "source": "manual",
+      "partNoPosition": 5
+    }
+  },
+  "drawingLabels": []
+}
